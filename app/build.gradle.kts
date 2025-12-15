@@ -68,4 +68,6 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata:1.6.8")
     //Apollo Client
     implementation("com.apollographql.apollo:apollo-runtime:4.3.3")
+    //Navigation compose
+    implementation("androidx.navigation:navigation-compose:2.9.6")
 }
