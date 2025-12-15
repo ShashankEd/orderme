@@ -12,6 +12,7 @@ class LoginViewModel : ViewModel() {
     // Specify the data
     private var userName = MutableLiveData("")
     private var password = MutableLiveData("")
+    private var sessionToken = MutableLiveData("")
 
     var userNameData: LiveData<String> = userName
 
@@ -23,5 +24,11 @@ class LoginViewModel : ViewModel() {
 
     fun updatePassword(password: String) {
         this.password.value = password
+    }
+
+    val session: LiveData<String> = sessionToken
+
+    fun updateSessionToken(token: String) {
+        this.sessionToken.value = token
     }
 }

@@ -1,0 +1,3 @@
+mutation Register($usernam: String!, $pass: String!, $isAd: Boolean!) {
+    registerUser(username: $usernam, email: $usernam, password: $pass, isAdmin: $isAd)
+}

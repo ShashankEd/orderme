@@ -1,6 +1,7 @@
 package com.product.orderfromhere.view
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,37 +29,61 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.product.orderfromhere.LoginMutation
-import com.product.orderfromhere.model.apolloClient
+import com.product.orderfromhere.RegisterMutation
+import com.product.orderfromhere.model.server.createApolloClient
 import com.product.orderfromhere.view.ui.theme.OrderFromHereTheme
+import com.product.orderfromhere.viewmodel.ApolloViewModel
 import com.product.orderfromhere.viewmodel.LoginViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    private val loginViewModel by viewModels<LoginViewModel>()
+//    private val loginViewModel by viewModels<LoginViewModel>()
+    private val apolloViewModel by viewModels<ApolloViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        apolloViewModel.updateEndpoint("authenticate")
         setContent {
             OrderFromHereTheme {
-                LoginForm(loginViewModel)
+//                LoginForm(loginViewModel)
+                 val navHostController = rememberNavController()
+                NavigationHostController(navHostController)
+
             }
         }
     }
 }
 
 @Composable
-fun LoginForm(viewModel: LoginViewModel) {
+fun LoginScreen(viewModel: LoginViewModel, navController: NavHostController, apolloViewModel: ApolloViewModel) {
+    LoginOrRegisterForm(viewModel, true, navController, apolloViewModel)
+}
+
+@Composable
+fun RegisterScreen(viewModel: LoginViewModel, navController: NavHostController, apolloViewModel: ApolloViewModel) {
+    LoginOrRegisterForm(viewModel, false, navController, apolloViewModel)
+}
+
+
+@Composable
+fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navController: NavHostController, apolloViewModel: ApolloViewModel) {
     val userNameValue by viewModel.userNameData.observeAsState("")
     val passwordValue by viewModel.passwordData.observeAsState("")
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val apolloClient = createApolloClient(apolloViewModel.baseURL.value)
+
 
     Surface {
         Column(
@@ -94,7 +119,7 @@ fun LoginForm(viewModel: LoginViewModel) {
                 modifier = Modifier.fillMaxWidth()
                     .background(color = Color.Transparent),
                 label = "Username",
-                placeholder = viewModel.userNameData.value.toString()
+                placeholder = viewModel.userNameData?.value.toString()
             )
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -116,20 +141,43 @@ fun LoginForm(viewModel: LoginViewModel) {
             Button(
                 onClick = fun() {
                     // TODO: call the API here to login & remove the logs
-                    println("******* Calling Login API *******")
+                    println("******* Calling  ${if (isLogin) "Login" else "Register"}  API *******")
                     println("Username: ${viewModel.userNameData.value}")
                     println("Password: ${viewModel.passwordData.value}")
                     scope.launch {
-                        val response = apolloClient.mutation(LoginMutation(
-                            usernam = viewModel.userNameData.value.toString(),
-                            pass = viewModel.passwordData.value.toString()
-                        )).execute()
-                        if(response.data != null) {
-                            println("******* Login Success *******")
-                            println("Login response Token: ${response.data?.login}")
+                        if(isLogin) {
+                            val response = apolloClient.mutation(LoginMutation(
+                                usernam = viewModel.userNameData?.value.toString(),
+                                pass = viewModel.passwordData?.value.toString()
+                            )).execute()
+
+                            if(response?.data != null) {
+                                println("******* Login Success *******")
+                                println(" Login  response Token: ${response.data?.login}")
+                                if(!response.data?.login.isNullOrEmpty()) {
+                                    Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
+                                    viewModel.updateSessionToken(response?.data?.login.toString())
+                                    navController.navigate("dashboard")
+                                }
+                            } else {
+                                println("*******  Login  Failed *******")
+                            }
                         } else {
-                            println("******* Login Failed *******")
-                            println("Login response: ${response.data}")
+                            val response = apolloClient.mutation(RegisterMutation(
+                                usernam = viewModel.userNameData?.value.toString(),
+                                pass = viewModel.passwordData?.value.toString(),
+                                isAd = false
+                            )).execute()
+                            if(response?.data != null) {
+                                println("******* Register Success *******")
+                                println(" Register response: ${response.data?.registerUser}")
+                                Toast.makeText(context, "Register Successful", Toast.LENGTH_LONG).show()
+                                if(response.data?.registerUser == "Registration successful") {
+                                    navController.navigate(Route.Login.route)
+                                }
+                            } else {
+                                println("*******  Register  Failed *******")
+                            }
                         }
                     }
                 },
@@ -139,7 +187,7 @@ fun LoginForm(viewModel: LoginViewModel) {
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text("Login")
+                Text( if(isLogin)  "Login" else "Register")
             }
         }
     }
