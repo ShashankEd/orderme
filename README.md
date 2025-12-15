@@ -1,8 +1,16 @@
 # Order Me is an Android App which is for online shopping
 
-- # Tech Stack
+# Tech Stack
   - Jetpack compose
   - GraphQl Appolo client
   - Kotlin Language
 
-- Note: Add More details
+# Screens
+- Register
+- Login
+- Dashboard
+
+# Apis Implemented
+- Register
+- Login
+- Get products
