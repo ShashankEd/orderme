@@ -1,6 +1,7 @@
 package com.product.orderfromhere.view.navigation
 
 import android.annotation.SuppressLint
+import android.app.Application
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -8,6 +9,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -22,10 +25,18 @@ import com.product.orderfromhere.viewmodel.LoginViewModel
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
-fun AppNavigation() {
+fun AppNavigation(application: Application) {
     val navHostController = rememberNavController()
-    val loginViewModel = LoginViewModel()
+    val loginViewModel = LoginViewModel(application)
     val apolloViewModel = ApolloViewModel()
+    val sessionToken by loginViewModel.sessionFromStore.collectAsState()
+
+    // TODO: Check how can you handle the route in case if token is present!
+//    var graph = "auth_graph"
+//    if(sessionToken.isNotEmpty()) {
+//        graph = "app_graph"
+//    }
+
     NavHost(
         navController = navHostController,
         startDestination = "auth_graph",

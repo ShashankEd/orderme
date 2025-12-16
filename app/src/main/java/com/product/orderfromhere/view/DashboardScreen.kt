@@ -21,6 +21,7 @@ import com.product.orderfromhere.viewmodel.LoginViewModel
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,31 +49,34 @@ fun DashboardScreen(viewModel: LoginViewModel, navController: NavHostController,
     val scope = rememberCoroutineScope()
     var uiState by remember { mutableStateOf<UiState>(UiState.Loading) }
 
-    LaunchedEffect(Unit) {
-        println("Session token = ${viewModel.session.value.toString()}")
-        val response = apolloClient.query(GetAllProductQuery())
-            .addHttpHeader("Authorization", "Bearer ${viewModel.session.value}")
-            .execute()
-        println("GetAllProduct Response = ${response.data?.getAllProduct.toString()}")
+    val sessionToken by viewModel.sessionFromStore.collectAsState()
+    if(sessionToken.isNotEmpty()) {
+        LaunchedEffect(Unit) {
+            val response = apolloClient.query(GetAllProductQuery())
+                .addHttpHeader("Authorization", "Bearer $sessionToken")
+                .execute()
+            println("GetAllProduct Response = ${response.data?.getAllProduct.toString()}")
 
-        if(!response.data?.getAllProduct.isNullOrEmpty()) {
-            val products = response.data?.getAllProduct?.map { item ->
-                Product(
-                    id = item?.id,
-                    title = item?.title,
-                    brand = item?.brand,
-                    description = item?.description,
-                )
-            } as ArrayList< Product>
-            if(products.isNotEmpty()) {
-                uiState = UiState.Success(products = products)
+            if(!response.data?.getAllProduct.isNullOrEmpty()) {
+                val products = response.data?.getAllProduct?.map { item ->
+                    Product(
+                        id = item?.id,
+                        title = item?.title,
+                        brand = item?.brand,
+                        description = item?.description,
+                    )
+                } as ArrayList< Product>
+                if(products.isNotEmpty()) {
+                    uiState = UiState.Success(products = products)
+                } else {
+                    uiState = UiState.Error("Get product failed")
+                }
             } else {
                 uiState = UiState.Error("Get product failed")
             }
-        } else {
-            uiState = UiState.Error("Get product failed")
         }
     }
+
 
     when(uiState) {
         is UiState.Success -> {
@@ -91,8 +95,8 @@ fun DashboardScreen(viewModel: LoginViewModel, navController: NavHostController,
                         .padding(innerPadding)
                 ) {
                     items(items = products) {
+
                             item ->
-                        print("Product loaded")
                         Card(
                             modifier = Modifier
                                 .padding(4.dp)

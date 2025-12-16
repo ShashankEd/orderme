@@ -58,13 +58,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        apolloViewModel.updateEndpoint("authenticate")
+        apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/authenticate")
         setContent {
             OrderFromHereTheme {
 //                LoginForm(loginViewModel)
                  val navHostController = rememberNavController()
 //                NavigationHostController(navHostController)
-                AppNavigation()
+                AppNavigation(application)
             }
         }
     }
@@ -88,7 +88,7 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val apolloClient = createApolloClient(apolloViewModel.baseURL.value)
-    println("isLogin = ${isLogin}")
+    
     Surface {
         Column(
             verticalArrangement = Arrangement.Center,

@@ -1,18 +1,25 @@
 package com.product.orderfromhere.viewmodel
 
+import android.app.Application
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.product.orderfromhere.model.datastore.DataStoreManager
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel (application: Application): AndroidViewModel(application) {
     // Specify the data
+    private val tokenDataStore = DataStoreManager(application)
     private var userName = MutableLiveData("")
     private var password = MutableLiveData("")
-    private var sessionToken = MutableLiveData("")
 
     var userNameData: LiveData<String> = userName
 
@@ -26,9 +33,17 @@ class LoginViewModel : ViewModel() {
         this.password.value = password
     }
 
-    val session: LiveData<String> = sessionToken
+
+    val sessionFromStore = tokenDataStore.sessionToken
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ""
+        )
 
     fun updateSessionToken(token: String) {
-        this.sessionToken.value = token
+        viewModelScope.launch {
+            tokenDataStore.saveSessionToken(token)
+        }
     }
 }
