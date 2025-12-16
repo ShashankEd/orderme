@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import com.product.orderfromhere.GetAllProductQuery
 import com.product.orderfromhere.model.Product
 import com.product.orderfromhere.model.server.createApolloClient
-import kotlinx.coroutines.launch
 
 sealed class UiState {
     object Loading : UiState()
@@ -78,16 +77,6 @@ fun DashboardScreen(viewModel: LoginViewModel, navController: NavHostController,
     when(uiState) {
         is UiState.Success -> {
             val products = (uiState as UiState.Success).products
-            println("Products = ${products.toString()}")
-            Text(
-                text = "Products",
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(16.dp)
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-
             Scaffold(
                 topBar = {
                     TopAppBar(

@@ -40,6 +40,11 @@ import androidx.navigation.compose.rememberNavController
 import com.product.orderfromhere.LoginMutation
 import com.product.orderfromhere.RegisterMutation
 import com.product.orderfromhere.model.server.createApolloClient
+import com.product.orderfromhere.view.navigation.AppNavigation
+import com.product.orderfromhere.view.navigation.AppRoute
+import com.product.orderfromhere.view.navigation.AuthRoute
+//import com.product.orderfromhere.view.navigation.NavigationHostController
+//import com.product.orderfromhere.view.navigation.Route
 import com.product.orderfromhere.view.ui.theme.OrderFromHereTheme
 import com.product.orderfromhere.viewmodel.ApolloViewModel
 import com.product.orderfromhere.viewmodel.LoginViewModel
@@ -58,8 +63,8 @@ class MainActivity : ComponentActivity() {
             OrderFromHereTheme {
 //                LoginForm(loginViewModel)
                  val navHostController = rememberNavController()
-                NavigationHostController(navHostController)
-
+//                NavigationHostController(navHostController)
+                AppNavigation()
             }
         }
     }
@@ -83,8 +88,7 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val apolloClient = createApolloClient(apolloViewModel.baseURL.value)
-
-
+    println("isLogin = ${isLogin}")
     Surface {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -157,7 +161,7 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
                                 if(!response.data?.login.isNullOrEmpty()) {
                                     Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
                                     viewModel.updateSessionToken(response?.data?.login.toString())
-                                    navController.navigate("dashboard")
+                                    navController.navigate(AppRoute.Dashboard.route)
                                 }
                             } else {
                                 println("*******  Login  Failed *******")
@@ -173,7 +177,7 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
                                 println(" Register response: ${response.data?.registerUser}")
                                 Toast.makeText(context, "Register Successful", Toast.LENGTH_LONG).show()
                                 if(response.data?.registerUser == "Registration successful") {
-                                    navController.navigate(Route.Login.route)
+                                    navController.navigate(AuthRoute.Login.route)
                                 }
                             } else {
                                 println("*******  Register  Failed *******")
@@ -185,10 +189,21 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
                 shape = RoundedCornerShape(5.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(50.dp),
             ) {
                 Text( if(isLogin)  "Login" else "Register")
             }
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = if(!isLogin) "Already have an account, Click to Login! " else "No Account, click here to register!",
+                color = if(isLogin ) Color.Red else Color.Blue,
+                modifier = Modifier.clickable {
+                    if(isLogin)
+                        navController.navigate(AuthRoute.Register.route)
+                    else
+                        navController.navigate(AuthRoute.Login.route)
+                }
+            )
         }
     }
 }
