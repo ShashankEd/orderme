@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,6 +22,7 @@ import androidx.navigation.navigation
 import com.product.orderfromhere.view.DashboardScreen
 import com.product.orderfromhere.view.LoginScreen
 import com.product.orderfromhere.view.RegisterScreen
+import com.product.orderfromhere.view.SplashScreen
 import com.product.orderfromhere.viewmodel.ApolloViewModel
 import com.product.orderfromhere.viewmodel.LoginViewModel
 
@@ -28,25 +31,23 @@ import com.product.orderfromhere.viewmodel.LoginViewModel
 fun AppNavigation(application: Application) {
     val navHostController = rememberNavController()
     val loginViewModel = LoginViewModel(application)
-    val apolloViewModel = ApolloViewModel()
-    val sessionToken by loginViewModel.sessionFromStore.collectAsState()
-
-    // TODO: Check how can you handle the route in case if token is present!
-//    var graph = "auth_graph"
-//    if(sessionToken.isNotEmpty()) {
-//        graph = "app_graph"
-//    }
+//    val apolloViewModel = ApolloViewModel()
 
     NavHost(
         navController = navHostController,
-        startDestination = "auth_graph",
+        startDestination = SplashRoute.Splash.route,
         route = "root_graph"
     ) {
+        //splash route
+        composable(SplashRoute.Splash.route) {
+            SplashScreen(navHostController, loginViewModel)
+        }
         navigation(
             startDestination = AuthRoute.Login.route,
             route = "auth_graph",
         )
         {
+            val apolloViewModel = ApolloViewModel()
             apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/authenticate")
             composable(AuthRoute.Register.route) {
                 RegisterScreen(loginViewModel, navHostController, apolloViewModel)
@@ -61,9 +62,21 @@ fun AppNavigation(application: Application) {
             startDestination = AppRoute.Dashboard.route,
             route = "app_graph"
         ) {
+            val apolloViewModel = ApolloViewModel()
+            apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/other")
             composable(AppRoute.Dashboard.route)
             {
-                MainScreenWithBottomTab(navHostController, loginViewModel)
+//                MainScreenWithBottomTab(navHostController, loginViewModel, sessionToken)
+                DashboardScreen(
+                    loginViewModel,
+                    navHostController,
+                    apolloViewModel
+                )
+            }
+
+            composable(AppRoute.Settings.route)
+            {
+                SettingScreen(navHostController, loginViewModel)
             }
         }
 
@@ -94,11 +107,11 @@ fun MainScreenWithBottomTab(rootNavController: NavHostController, loginViewModel
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(AppRoute.Dashboard.route) {
-                DashboardScreen(
-                 loginViewModel,
-                    rootNavController,
-                    apolloViewModel
-                )
+//                DashboardScreen(
+//                 loginViewModel,
+//                    rootNavController,
+//                    apolloViewModel
+//                )
             }
         }
     }

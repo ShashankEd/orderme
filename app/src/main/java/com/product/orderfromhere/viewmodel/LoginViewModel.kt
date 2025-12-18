@@ -1,17 +1,14 @@
 package com.product.orderfromhere.viewmodel
 
 import android.app.Application
-import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.product.orderfromhere.model.datastore.DataStoreManager
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -20,10 +17,13 @@ class LoginViewModel (application: Application): AndroidViewModel(application) {
     private val tokenDataStore = DataStoreManager(application)
     private var userName = MutableLiveData("")
     private var password = MutableLiveData("")
+    private var _sessionTokenInStore = MutableStateFlow<String?> (null)
 
     var userNameData: LiveData<String> = userName
 
     var passwordData: LiveData<String> = password
+
+    var sessionTokenInStore: StateFlow<String?> = _sessionTokenInStore
 
     fun updateUsername(username: String) {
         this.userName.value = username
@@ -45,5 +45,15 @@ class LoginViewModel (application: Application): AndroidViewModel(application) {
         viewModelScope.launch {
             tokenDataStore.saveSessionToken(token)
         }
+    }
+
+    fun deleteSessionToken() {
+        viewModelScope.launch {
+            tokenDataStore.deleteSessionToken()
+        }
+    }
+
+    fun getSessionFromStore() {
+
     }
 }

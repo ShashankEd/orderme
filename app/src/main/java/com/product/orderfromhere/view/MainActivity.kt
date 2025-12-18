@@ -88,7 +88,7 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val apolloClient = createApolloClient(apolloViewModel.baseURL.value)
-    
+    println("Apollo base url = ${apolloViewModel.baseURL.value}")
     Surface {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -154,7 +154,7 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
                                 usernam = viewModel.userNameData?.value.toString(),
                                 pass = viewModel.passwordData?.value.toString()
                             )).execute()
-
+                            println("Base url ${apolloViewModel.baseURL.value}")
                             if(response?.data != null) {
                                 println("******* Login Success *******")
                                 println(" Login  response Token: ${response.data?.login}")

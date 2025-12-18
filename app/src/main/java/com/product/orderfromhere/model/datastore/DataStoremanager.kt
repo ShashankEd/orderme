@@ -27,4 +27,11 @@ class DataStoreManager(private val context: Context) {
         .map { preferences ->
             preferences[SESSION_TOKEN] ?: ""
         }
+
+    suspend fun deleteSessionToken() {
+        //make it empty
+        context.datastore.edit { preferences ->
+            preferences.remove(SESSION_TOKEN)
+        }
+    }
 }
