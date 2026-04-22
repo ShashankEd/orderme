@@ -12,3 +12,7 @@ sealed class AppRoute(val route: String) {
     object Settings: AppRoute(route = "settings")
     object Feedback: AppRoute(route = "feedback")
 }
+
+sealed class SplashRoute(val route: String) {
+    object Splash: SplashRoute(route = "splash")
+}

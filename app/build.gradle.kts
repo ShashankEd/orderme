@@ -70,4 +70,6 @@ dependencies {
     implementation("com.apollographql.apollo:apollo-runtime:4.3.3")
     //Navigation compose
     implementation("androidx.navigation:navigation-compose:2.9.6")
+    //Data store
+    implementation("androidx.datastore:datastore-preferences:1.2.0")
 }
