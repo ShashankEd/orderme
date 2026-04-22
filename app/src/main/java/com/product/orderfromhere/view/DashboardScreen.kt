@@ -3,6 +3,7 @@ package com.product.orderfromhere.view
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,15 +48,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.product.orderfromhere.GetAllProductQuery
 import com.product.orderfromhere.model.Product
 import com.product.orderfromhere.model.server.createApolloClient
-import com.product.orderfromhere.view.navigation.AppRoute
-import com.product.orderfromhere.view.navigation.AuthRoute
-import com.product.orderfromhere.view.navigation.SplashRoute
+import com.product.orderfromhere.view.navigation.ScreenRoutes
 import kotlinx.coroutines.launch
 
 sealed class UiState {
     object Loading : UiState()
     data class Success(val products: ArrayList<Product>) : UiState()
     data class Error(val message: String) : UiState()
+    data class TokenExpired(val message: String): UiState()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,7 +72,7 @@ fun AppBar(navHostController: NavHostController) {
         modifier = Modifier.shadow(0.dp),
         title = { Text(text = "Dashboard") },
         navigationIcon = {
-             if(navHostController.currentDestination?.route != AppRoute.Dashboard.route) {
+             if(navHostController.currentDestination?.route != ScreenRoutes.DashboardScreen.route) {
                  IconButton(onClick = {
                      // Exit the app
                      navHostController.popBackStack()
@@ -89,8 +90,6 @@ fun AppBar(navHostController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(viewModel: LoginViewModel, navController: NavHostController, apolloViewModel: ApolloViewModel) {
-//    apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/other")
-    println("Apollo base url = ${apolloViewModel.baseURL.value}")
     val apolloClient = createApolloClient(apolloViewModel.baseURL.value)
     val scope = rememberCoroutineScope()
     var uiState by remember { mutableStateOf<UiState>(UiState.Loading) }
@@ -100,6 +99,8 @@ fun DashboardScreen(viewModel: LoginViewModel, navController: NavHostController,
     println("sessionToken in Dashboard = ${sessionToken}")
     if(sessionToken.isNotEmpty()) {
         LaunchedEffect(Unit) {
+            apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/other")
+            println("Apollo base url = ${apolloViewModel.baseURL.value}")
             val response = apolloClient.query(GetAllProductQuery())
                 .addHttpHeader("Authorization", "Bearer $sessionToken")
                 .execute()
@@ -120,7 +121,7 @@ fun DashboardScreen(viewModel: LoginViewModel, navController: NavHostController,
                     uiState = UiState.Error("Get product failed")
                 }
             } else {
-                uiState = UiState.Error("Get product failed")
+                uiState = UiState.TokenExpired("Token expired")
             }
         }
     }
@@ -137,26 +138,37 @@ fun DashboardScreen(viewModel: LoginViewModel, navController: NavHostController,
                         // Apply the padding provided by the Scaffold
                         .padding(innerPadding)
                 ) {
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Text(
-                        text = "Settings",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 30.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .clickable {
-                            scope.launch {
-                                // truncate the session token from the data store
-//                                viewModel.deleteSessionToken()
-                                // navigate to auth_graph
-//                navController.navigate("auth_graph") {
-//                    popUpTo(AppRoute.Dashboard.route) { inclusive = true }
-//                }
-                                navController.navigate(AppRoute.Settings.route)
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Settings",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 30.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .clickable {
+                                    scope.launch {
+                                        navController.navigate(ScreenRoutes.SettingsScreen.route)
+                                    }
+                                }
+                        )
+                        IconButton(
+                            onClick = {
+                                viewModel.deleteSessionToken()
+                                navController.navigate(ScreenRoutes.AuthNav.route) {
+                                    popUpTo(ScreenRoutes.DashboardScreen.route) { inclusive = true }
+                                }
                             }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Logout"
+                            )
                         }
-                    )
+                    }
+
                     Spacer(modifier = Modifier.height(10.dp))
                     LazyColumn {
                         items(items = products) {
@@ -226,6 +238,13 @@ fun DashboardScreen(viewModel: LoginViewModel, navController: NavHostController,
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
+            }
+        }
+        is UiState.TokenExpired -> {
+            println("****** Auth Token expired, Log out*****")
+            viewModel.deleteSessionToken()
+            navController.navigate(ScreenRoutes.AuthNav.route) {
+                popUpTo(ScreenRoutes.HomeNav.route) { inclusive = true }
             }
         }
         else -> {

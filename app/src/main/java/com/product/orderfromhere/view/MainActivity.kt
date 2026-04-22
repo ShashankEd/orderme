@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,15 +35,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.product.orderfromhere.LoginMutation
 import com.product.orderfromhere.RegisterMutation
 import com.product.orderfromhere.model.server.createApolloClient
-import com.product.orderfromhere.view.navigation.AppNavigation
-import com.product.orderfromhere.view.navigation.AppRoute
-import com.product.orderfromhere.view.navigation.AuthRoute
-//import com.product.orderfromhere.view.navigation.NavigationHostController
-//import com.product.orderfromhere.view.navigation.Route
+import com.product.orderfromhere.view.navigation.RootNav
+import com.product.orderfromhere.view.navigation.ScreenRoutes
 import com.product.orderfromhere.view.ui.theme.OrderFromHereTheme
 import com.product.orderfromhere.viewmodel.ApolloViewModel
 import com.product.orderfromhere.viewmodel.LoginViewModel
@@ -52,19 +47,12 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-//    private val loginViewModel by viewModels<LoginViewModel>()
-    private val apolloViewModel by viewModels<ApolloViewModel>()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/authenticate")
         setContent {
             OrderFromHereTheme {
-//                LoginForm(loginViewModel)
-                 val navHostController = rememberNavController()
-//                NavigationHostController(navHostController)
-                AppNavigation(application)
+                RootNav(application)
             }
         }
     }
@@ -87,8 +75,9 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
     val passwordValue by viewModel.passwordData.observeAsState("")
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val apolloClient = createApolloClient(apolloViewModel.baseURL.value)
+    apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/authenticate")
     println("Apollo base url = ${apolloViewModel.baseURL.value}")
+    val apolloClient = createApolloClient(apolloViewModel.baseURL.value)
     Surface {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -161,10 +150,10 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
                                 if(!response.data?.login.isNullOrEmpty()) {
                                     Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
                                     viewModel.updateSessionToken(response?.data?.login.toString())
-                                    navController.navigate(AppRoute.Dashboard.route)
+                                    navController.navigate(ScreenRoutes.DashboardScreen.route)
                                 }
                             } else {
-                                println("*******  Login  Failed *******")
+                                println("*******  Login  Failed ******* ${response.toString()}")
                             }
                         } else {
                             val response = apolloClient.mutation(RegisterMutation(
@@ -177,7 +166,7 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
                                 println(" Register response: ${response.data?.registerUser}")
                                 Toast.makeText(context, "Register Successful", Toast.LENGTH_LONG).show()
                                 if(response.data?.registerUser == "Registration successful") {
-                                    navController.navigate(AuthRoute.Login.route)
+                                    navController.navigate(ScreenRoutes.LoginScreen.route)
                                 }
                             } else {
                                 println("*******  Register  Failed *******")
@@ -199,9 +188,9 @@ fun LoginOrRegisterForm(viewModel: LoginViewModel, isLogin: Boolean, navControll
                 color = if(isLogin ) Color.Red else Color.Blue,
                 modifier = Modifier.clickable {
                     if(isLogin)
-                        navController.navigate(AuthRoute.Register.route)
+                        navController.navigate(ScreenRoutes.RegisterScreen.route)
                     else
-                        navController.navigate(AuthRoute.Login.route)
+                        navController.navigate(ScreenRoutes.LoginScreen.route)
                 }
             )
         }

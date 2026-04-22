@@ -13,15 +13,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import com.product.orderfromhere.view.navigation.SplashRoute
+import com.product.orderfromhere.view.navigation.ScreenRoutes
+import com.product.orderfromhere.viewmodel.ApolloViewModel
 import com.product.orderfromhere.viewmodel.LoginViewModel
 
 @Composable
 fun SplashScreen(
     navHostController: NavHostController,
-    loginViewModel: LoginViewModel
+    loginViewModel: LoginViewModel,
+    apolloViewModel: ApolloViewModel
 ) {
-    // new way
     var uiState by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -32,7 +33,8 @@ fun SplashScreen(
         isLoading = false
     }
     println("uiState = ${uiState}")
-
+    apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/authenticate")
+    println("Apollo base url = ${apolloViewModel.baseURL.value}")
     when {
         isLoading -> {
             //show the spinner
@@ -43,14 +45,14 @@ fun SplashScreen(
         }
         !uiState.isNullOrEmpty() -> {
             println("******Token present*****")
-            navHostController.navigate("app_graph") {
-                popUpTo(SplashRoute.Splash.route) { inclusive = true }
+            navHostController.navigate(ScreenRoutes.HomeNav.route) {
+                popUpTo(ScreenRoutes.SplashScreen.route) { inclusive = true }
             }
         }
         uiState.isNullOrEmpty() -> {
             println("******Token not there*****")
-            navHostController.navigate("auth_graph") {
-                popUpTo(SplashRoute.Splash.route) { inclusive = true }
+            navHostController.navigate(ScreenRoutes.LoginScreen.route) {
+                popUpTo(ScreenRoutes.SplashScreen.route) { inclusive = true }
             }
         }
     }
