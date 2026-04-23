@@ -9,14 +9,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.product.orderfromhere.view.DashboardScreen
@@ -26,93 +24,91 @@ import com.product.orderfromhere.view.SplashScreen
 import com.product.orderfromhere.viewmodel.ApolloViewModel
 import com.product.orderfromhere.viewmodel.LoginViewModel
 
-@SuppressLint("ViewModelConstructorInComposable")
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("ViewModelConstructorInComposable", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun AppNavigation(application: Application) {
-    val navHostController = rememberNavController()
+fun RootNav(application: Application) {
     val loginViewModel = LoginViewModel(application)
-//    val apolloViewModel = ApolloViewModel()
+    val apolloViewModel = ApolloViewModel()
+    val navHostController = rememberNavController()
+    val currentRoute = navHostController.currentBackStackEntryAsState().value?.destination?.route
 
-    NavHost(
-        navController = navHostController,
-        startDestination = SplashRoute.Splash.route,
-        route = "root_graph"
-    ) {
-        //splash route
-        composable(SplashRoute.Splash.route) {
-            SplashScreen(navHostController, loginViewModel)
-        }
-        navigation(
-            startDestination = AuthRoute.Login.route,
-            route = "auth_graph",
-        )
-        {
-            val apolloViewModel = ApolloViewModel()
-            apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/authenticate")
-            composable(AuthRoute.Register.route) {
-                RegisterScreen(loginViewModel, navHostController, apolloViewModel)
-            }
+    // Conditionally show Scaffold for home routes
+    val showHomeScaffold = currentRoute?.startsWith(ScreenRoutes.HomeNav.route) == true
 
-            composable(AuthRoute.Login.route) {
-                LoginScreen(loginViewModel, navHostController, apolloViewModel)
-            }
-        }
-
-        navigation(
-            startDestination = AppRoute.Dashboard.route,
-            route = "app_graph"
-        ) {
-            val apolloViewModel = ApolloViewModel()
-            apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/other")
-            composable(AppRoute.Dashboard.route)
-            {
-//                MainScreenWithBottomTab(navHostController, loginViewModel, sessionToken)
-                DashboardScreen(
-                    loginViewModel,
-                    navHostController,
-                    apolloViewModel
+    if (showHomeScaffold) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Dashboard") },
+                    modifier = Modifier.statusBarsPadding(),
                 )
             }
-
-            composable(AppRoute.Settings.route)
-            {
-                SettingScreen(navHostController, loginViewModel)
+        ) {
+            NavHost(
+                navController = navHostController,
+                startDestination = ScreenRoutes.AuthNav.route,
+            ) {
+                AuthNav(navHostController, apolloViewModel, loginViewModel)
+                HomeNav(navHostController, apolloViewModel, loginViewModel)
             }
         }
-
+    } else {
+        NavHost(
+            navController = navHostController,
+            startDestination = ScreenRoutes.AuthNav.route,
+        ) {
+            AuthNav(navHostController, apolloViewModel, loginViewModel)
+            HomeNav(navHostController, apolloViewModel, loginViewModel)
+        }
     }
 }
 
-@SuppressLint("ViewModelConstructorInComposable")
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MainScreenWithBottomTab(rootNavController: NavHostController, loginViewModel: LoginViewModel) {
-    // This is the second, internal NavController
-    val mainNavController = rememberNavController()
-    val apolloViewModel = ApolloViewModel()
-    apolloViewModel.updateEndpoint("http://10.0.2.2:8000/graphql/other")
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Dashboard") },
-                modifier = Modifier.statusBarsPadding(),
+fun NavGraphBuilder.HomeNav(
+    navHostController: NavHostController,
+    apolloViewModel: ApolloViewModel,
+    loginViewModel: LoginViewModel
+) {
+    navigation(
+        route = ScreenRoutes.HomeNav.route,
+        startDestination = ScreenRoutes.DashboardScreen.route
+    ) {
+        composable(route = ScreenRoutes.DashboardScreen.route) {
+            DashboardScreen(
+                viewModel = loginViewModel,
+                navController = navHostController,
+                apolloViewModel = apolloViewModel
             )
         }
-    ) { innerPadding ->
-        NavHost(
-            navController = mainNavController, // Use the internal NavController
-            startDestination = AppRoute.Dashboard.route,
-            route = "app_graph",
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(AppRoute.Dashboard.route) {
-//                DashboardScreen(
-//                 loginViewModel,
-//                    rootNavController,
-//                    apolloViewModel
-//                )
-            }
+        composable(route = ScreenRoutes.SettingsScreen.route) {
+            SettingScreen(
+                navHostController = navHostController,
+                loginViewModel = loginViewModel
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.AuthNav(
+    navHostController: NavHostController,
+    apolloViewModel: ApolloViewModel,
+    loginViewModel: LoginViewModel
+) {
+    navigation(
+        startDestination = ScreenRoutes.SplashScreen.route,
+        route = ScreenRoutes.AuthNav.route,
+    )
+    {
+        composable( ScreenRoutes.SplashScreen.route) {
+            SplashScreen(navHostController, loginViewModel, apolloViewModel)
+        }
+
+        composable( ScreenRoutes.RegisterScreen.route) {
+            RegisterScreen(loginViewModel, navHostController, apolloViewModel)
+        }
+
+        composable( ScreenRoutes.LoginScreen.route) {
+            LoginScreen(loginViewModel, navHostController, apolloViewModel)
         }
     }
 }

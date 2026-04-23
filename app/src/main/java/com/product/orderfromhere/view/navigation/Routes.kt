@@ -1,18 +1,19 @@
 package com.product.orderfromhere.view.navigation
 
-// Auth screens
-sealed class AuthRoute(val route: String) {
-    object Login : AuthRoute("login")
-    object Register : AuthRoute("register")
-}
+sealed class ScreenRoutes(val route : String) {
+    //Screen Routes
+    data object SplashScreen : ScreenRoutes("splash_screen")
 
-// App screens
-sealed class AppRoute(val route: String) {
-    object Dashboard: AppRoute(route = "dashboard")
-    object Settings: AppRoute(route = "settings")
-    object Feedback: AppRoute(route = "feedback")
-}
+    data object LoginScreen : ScreenRoutes("login_screen")
 
-sealed class SplashRoute(val route: String) {
-    object Splash: SplashRoute(route = "splash")
+    data object RegisterScreen : ScreenRoutes("register_screen")
+
+    data object DashboardScreen : ScreenRoutes("dashboard_screen")
+
+    data object SettingsScreen : ScreenRoutes("settings_screen")
+
+    //Graph Routes
+    data object AuthNav : ScreenRoutes("AUTH_NAV_GRAPH")
+
+    data object HomeNav : ScreenRoutes("HOME_NAV_GRAPH")
 }
